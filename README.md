@@ -4,21 +4,6 @@
 
 ---
 
-## 📌 Project Overview & Evaluation Alignment
-
-This project satisfies all requirements across your evaluation criteria:
-
-| Criteria | Weight | Implementation Details | Status |
-|---|---|---|---|
-| **Functionality** | **30%** | Dual-role Auth (Attendee/Organizer/Admin), Full Event CRUD, Dynamic Filters, User Management | ✅ **30/30** |
-| **Frontend/UI** | **20%** | Custom Vanilla CSS Design System, Responsive Glassmorphism, Micro-animations, Notification Toasts | ✅ **20/20** |
-| **Backend & DB** | **25%** | Express REST API, Mongoose Schemas (User, Event, Booking), JWT Auth, Middleware Guards | ✅ **25/25** |
-| **Booking Workflow** | **10%** | Seat selection, seat inventory decrement, nanoid reference, printable ticket stubs | ✅ **10/10** |
-| **Deployment** | **10%** | Production build scripts (`vite build`), environment variable separation, static uploads | ✅ **10/10** |
-| **Documentation** | **5%** | Complete README, API endpoint mapping, schema definitions, and setup guides | ✅ **5/5** |
-| **TOTAL** | **100%** | **Comprehensive Full-Stack Application** | 💯 **100/100** |
-
----
 
 ## 🚀 Key Features
 
