@@ -1,0 +1,45 @@
+name: Evently CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install Root Dependencies & Build Frontend
+        run: |
+          pnpm install
+          pnpm run build
+
+      - name: Install Server Dependencies & Run API Test Suite
+        run: |
+          cd server
+          pnpm install
+          node --check src/server.js
+          node src/server.js &
+          sleep 3
+          pnpm test

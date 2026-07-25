@@ -12,6 +12,8 @@ import dashboardRoutes from './routes/dashboardRoutes.js'
 import reportRoutes from './routes/reportRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 
+import { rateLimiter } from './middleware/rateLimiter.js'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const uploadsDir = path.join(__dirname, '../../uploads')
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
@@ -20,6 +22,18 @@ const app = express()
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }))
 app.use(express.json())
 app.use('/uploads', express.static(uploadsDir))
+
+// Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-Frame-Options', 'DENY')
+  res.setHeader('X-XSS-Protection', '1; mode=block')
+  next()
+})
+
+// Apply rate limiter to authentication & OTP endpoints
+app.use('/api/auth/send-otp', rateLimiter({ max: 10, message: 'Too many OTP requests. Please wait 15 minutes.' }))
+app.use('/api/auth/verify-otp', rateLimiter({ max: 10, message: 'Too many verification attempts.' }))
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.use('/api/auth', authRoutes)
