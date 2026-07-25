@@ -30,7 +30,19 @@ export default function BookingPage() {
   const currentTierObj = event?.ticketTiers?.find(t => t.name === selectedTier)
   const activePrice = currentTierObj ? currentTierObj.price : event?.price || 0
   const maxSeats = Math.min(10, currentTierObj ? currentTierObj.available : event?.ticketsAvailable || 0)
-  const total = activePrice * (selectedSeats.length > 0 ? selectedSeats.length : seats)
+
+  // Calculate dynamic seat pricing (VIP Rows A & B = 1.5x, Standard Rows C-E = 1.0x)
+  const calculateTotal = () => {
+    if (selectedSeats.length === 0) return activePrice * seats
+    return selectedSeats.reduce((sum, seatId) => {
+      const row = seatId.split('-')[0]
+      const isVip = row === 'A' || row === 'B'
+      const price = isVip ? Math.round(activePrice * 1.5) : activePrice
+      return sum + price
+    }, 0)
+  }
+
+  const total = calculateTotal()
 
   const handleStartCheckout = () => {
     setError('')

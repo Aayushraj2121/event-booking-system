@@ -77,9 +77,12 @@ export default function VisualSeatMap({ onSeatsSelected, maxSeats = 10, occupied
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 16, fontSize: 12, color: 'var(--muted)' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 16, fontSize: 12, color: 'var(--muted)', flexWrap: 'wrap' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 14, height: 14, borderRadius: 3, background: 'rgba(116,94,197,0.15)', border: '1px solid var(--line)' }}></span> VIP Row
+          <span style={{ width: 14, height: 14, borderRadius: 3, background: 'rgba(116,94,197,0.25)', border: '1px solid #745ec5' }}></span> 👑 VIP Rows (A &amp; B): +50% Price (1.5x)
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 14, height: 14, borderRadius: 3, background: 'var(--paper)', border: '1px solid var(--line)' }}></span> 🎟 Standard Rows (C–E)
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 14, height: 14, borderRadius: 3, background: '#745ec5' }}></span> Selected ({selected.length})

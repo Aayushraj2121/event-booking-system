@@ -35,7 +35,17 @@ router.post('/', requireAuth, async (req, res, next) => {
     event.ticketsAvailable -= numSeats
     await event.save()
 
-    const totalPrice = numSeats * pricePerSeat
+    // Calculate dynamic seat pricing (VIP Rows A & B = 1.5x, Standard Rows C-E = 1.0x)
+    let totalPrice = numSeats * pricePerSeat
+    if (Array.isArray(selectedSeats) && selectedSeats.length > 0) {
+      totalPrice = selectedSeats.reduce((sum, seatId) => {
+        const row = String(seatId).split('-')[0]
+        const isVip = row === 'A' || row === 'B'
+        const price = isVip ? Math.round(pricePerSeat * 1.5) : pricePerSeat
+        return sum + price
+      }, 0)
+    }
+
     const booking = await Booking.create({
       user: req.user._id, event: eventId,
       seats: numSeats, totalPrice,
