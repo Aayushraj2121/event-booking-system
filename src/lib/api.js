@@ -42,8 +42,11 @@ export const eventApi = {
     form.append('banner', file)
     return request('POST', `/events/${id}/banner`, form, true)
   },
-  getReviews:   (id) => request('GET', `/events/${id}/reviews`),
-  addReview:    (id, body) => request('POST', `/events/${id}/reviews`, body),
+  getReviews:     (id) => request('GET', `/events/${id}/reviews`),
+  addReview:      (id, body) => request('POST', `/events/${id}/reviews`, body),
+  getDiscussions: (id) => request('GET', `/events/${id}/discussions`),
+  postQuestion:   (id, question) => request('POST', `/events/${id}/discussions`, { question }),
+  answerQuestion: (id, discId, answer) => request('PATCH', `/events/${id}/discussions/${discId}/answer`, { answer }),
 }
 
 export const bookingApi = {

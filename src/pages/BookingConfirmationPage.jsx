@@ -44,16 +44,47 @@ export default function BookingConfirmationPage() {
   const formattedDate = dateObj.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   const issuedOn = new Date(booking.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
 
+  const handleDownloadIcs = () => {
+    const title = event?.title || 'Evently Event'
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `SUMMARY:${title}`,
+      `DESCRIPTION:Evently Ticket Booking Ref: ${booking.bookingRef}. Venue: ${event?.venue}, ${event?.city}`,
+      `LOCATION:${event?.venue}, ${event?.city}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\n')
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `${title.replace(/\s+/g, '_')}_Ticket.ics`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event?.title || 'Event')}&details=${encodeURIComponent(`Booking Ref: ${booking.bookingRef}`)}&location=${encodeURIComponent(`${event?.venue}, ${event?.city}`)}`
+
   return (
     <main className="confirmation-page">
       {/* Screen-only header */}
       <header className="dashboard-header no-print">
         <Link className="brand" to="/"><span className="brand-mark"><i></i><i></i><i></i></span>Evently</Link>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="outline-button" onClick={handleResendEmail} disabled={sendingEmail}>
-            {sendingEmail ? 'Sending Email…' : '✉ Email Ticket Confirmation'}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a className="outline-button" href={googleCalUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+            📅 Add to Google Calendar
+          </a>
+          <button className="outline-button" onClick={handleDownloadIcs}>
+            📥 Download .ics Calendar
           </button>
-          <button className="primary-button" onClick={() => window.print()}>🖨 Print / Download</button>
+          <button className="outline-button" onClick={handleResendEmail} disabled={sendingEmail}>
+            {sendingEmail ? 'Sending Email…' : '✉ Email Confirmation'}
+          </button>
+          <button className="primary-button" onClick={() => window.print()}>🖨 Print Invoice &amp; Ticket</button>
           <Link to="/dashboard" className="outline-button">Dashboard</Link>
         </div>
       </header>

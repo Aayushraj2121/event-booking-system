@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/auth'
 import { eventApi, bookingApi } from '../lib/api'
+import CameraQrScanner from '../components/CameraQrScanner'
 
 const CATEGORIES = ['Music', 'Technology', 'Workshop', 'Sports', 'Arts', 'Food', 'Business', 'Other']
 const blank = { title: '', description: '', category: 'Music', date: '', time: '', venue: '', city: '', ticketsTotal: '', price: '' }
@@ -22,6 +23,7 @@ export default function OrganizerPanel() {
   const [scanRef, setScanRef] = useState('')
   const [scannedBooking, setScannedBooking] = useState(null)
   const [scanning, setScanning] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
   const fileRef = useRef()
 
   const loadEvents = () => {
@@ -299,7 +301,20 @@ export default function OrganizerPanel() {
                 <button className="primary-button" type="submit" disabled={scanning}>
                   {scanning ? 'Searching…' : 'Verify Ticket'}
                 </button>
+                <button type="button" className="outline-button" onClick={() => setShowCamera(true)}>
+                  📸 Scan Camera
+                </button>
               </form>
+
+              {showCamera && (
+                <CameraQrScanner
+                  onScanResult={(ref) => {
+                    setScanRef(ref)
+                    bookingApi.verify(ref).then(({ booking }) => setScannedBooking(booking)).catch(err => showNotification(err.message, 'error'))
+                  }}
+                  onClose={() => setShowCamera(false)}
+                />
+              )}
 
               {scannedBooking && (
                 <div style={{ marginTop: 24, padding: 18, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--paper)' }}>

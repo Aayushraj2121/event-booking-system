@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { eventApi, bookingApi } from '../lib/api'
 import { useAuth } from '../context/auth'
+import VisualSeatMap from '../components/VisualSeatMap'
+import PaymentGatewayModal from '../components/PaymentGatewayModal'
 
 export default function BookingPage() {
   const { eventId } = useParams()
@@ -10,6 +12,8 @@ export default function BookingPage() {
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [seats, setSeats] = useState(1)
+  const [selectedSeats, setSelectedSeats] = useState([])
+  const [showPayment, setShowPayment] = useState(false)
   const [booking, setBooking] = useState(null) // confirmed booking
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -21,19 +25,26 @@ export default function BookingPage() {
       .finally(() => setLoading(false))
   }, [eventId])
 
-  const [selectedTier, setSelectedTier] = useState(event?.ticketTiers?.[0]?.name || 'General')
+  const [selectedTier, setSelectedTier] = useState('General')
 
   const currentTierObj = event?.ticketTiers?.find(t => t.name === selectedTier)
   const activePrice = currentTierObj ? currentTierObj.price : event?.price || 0
   const maxSeats = Math.min(10, currentTierObj ? currentTierObj.available : event?.ticketsAvailable || 0)
-  const total = activePrice * seats
+  const total = activePrice * (selectedSeats.length > 0 ? selectedSeats.length : seats)
+
+  const handleStartCheckout = () => {
+    setError('')
+    setShowPayment(true)
+  }
 
   const confirmBooking = async () => {
     setSubmitting(true)
     setError('')
     try {
-      const { booking: b } = await bookingApi.create({ eventId, seats, tierName: selectedTier })
+      const seatCount = selectedSeats.length > 0 ? selectedSeats.length : seats
+      const { booking: b } = await bookingApi.create({ eventId, seats: seatCount, tierName: selectedTier, selectedSeats })
       setBooking(b)
+      setShowPayment(false)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -135,11 +146,17 @@ export default function BookingPage() {
             </div>
           )}
 
+          {/* Interactive 2D Visual Seat Map */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 8 }}>Select Visual Seat Map (Optional)</label>
+            <VisualSeatMap onSeatsSelected={(s) => { setSelectedSeats(s); if (s.length > 0) setSeats(s.length); }} maxSeats={maxSeats} />
+          </div>
+
           <div className="seat-selector">
             <label>Number of Seats</label>
             <div className="seat-controls">
               <button className="seat-btn" onClick={() => setSeats(s => Math.max(1, s - 1))} aria-label="Decrease">−</button>
-              <span className="seat-count">{seats}</span>
+              <span className="seat-count">{selectedSeats.length > 0 ? selectedSeats.length : seats}</span>
               <button className="seat-btn" onClick={() => setSeats(s => Math.min(maxSeats, s + 1))} aria-label="Increase">+</button>
             </div>
             <p className="seat-hint">{maxSeats} tickets available · max 10 per booking</p>
@@ -151,21 +168,29 @@ export default function BookingPage() {
               <span>₹{activePrice === 0 ? 'Free' : activePrice.toLocaleString()}</span>
             </div>
             <div className="price-row">
-              <span>Seats selected</span>
-              <span>× {seats}</span>
+              <span>Seats selected {selectedSeats.length > 0 ? `(${selectedSeats.join(', ')})` : ''}</span>
+              <span>× {selectedSeats.length > 0 ? selectedSeats.length : seats}</span>
             </div>
             <div className="price-row total">
               <span>Total</span>
-              <span>{event.price === 0 ? 'Free' : `₹${total.toLocaleString()}`}</span>
+              <span>{activePrice === 0 ? 'Free' : `₹${total.toLocaleString()}`}</span>
             </div>
           </div>
 
           {error && <p className="form-error" role="alert">{error}</p>}
 
-          <button className="auth-submit" onClick={confirmBooking} disabled={submitting || maxSeats === 0}>
-            {submitting ? 'Confirming…' : 'Confirm Booking'} <span>→</span>
+          <button className="auth-submit" onClick={handleStartCheckout} disabled={submitting || maxSeats === 0}>
+            Proceed to Checkout <span>→</span>
           </button>
-          <p className="booking-note">No payment required for this demo. Booking is instant.</p>
+          <p className="booking-note">256-Bit Encrypted Secure Checkout.</p>
+
+          {showPayment && (
+            <PaymentGatewayModal
+              amount={total}
+              onPaymentSuccess={confirmBooking}
+              onClose={() => setShowPayment(false)}
+            />
+          )}
         </div>
       </div>
     </main>

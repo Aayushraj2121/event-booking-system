@@ -5,6 +5,7 @@ import multer from 'multer'
 import Event from '../models/Event.js'
 import Review from '../models/Review.js'
 import Booking from '../models/Booking.js'
+import Discussion from '../models/Discussion.js'
 import { requireAuth, requireOrganizer, requireAdmin } from '../middleware/auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -164,6 +165,46 @@ router.post('/:id/reviews', requireAuth, async (req, res, next) => {
     }
     next(error)
   }
+})
+
+// Discussions: Get Q&A list for an event
+router.get('/:id/discussions', async (req, res, next) => {
+  try {
+    const discussions = await Discussion.find({ event: req.params.id })
+      .populate('user', 'name role')
+      .sort({ createdAt: -1 })
+    res.json({ discussions })
+  } catch (error) { next(error) }
+})
+
+// Discussions: Post a question
+router.post('/:id/discussions', requireAuth, async (req, res, next) => {
+  try {
+    const { question } = req.body
+    if (!question?.trim()) return res.status(400).json({ message: 'Question text is required.' })
+    const discussion = await Discussion.create({
+      event: req.params.id,
+      user: req.user._id,
+      question: question.trim()
+    })
+    await discussion.populate('user', 'name role')
+    res.status(201).json({ discussion })
+  } catch (error) { next(error) }
+})
+
+// Discussions: Answer a question (Organizer/Admin)
+router.patch('/:id/discussions/:discId/answer', requireOrganizer, async (req, res, next) => {
+  try {
+    const { answer } = req.body
+    if (!answer?.trim()) return res.status(400).json({ message: 'Answer text is required.' })
+    const discussion = await Discussion.findById(req.params.discId)
+    if (!discussion) return res.status(404).json({ message: 'Question not found.' })
+    discussion.answer = answer.trim()
+    discussion.isAnswered = true
+    await discussion.save()
+    await discussion.populate('user', 'name role')
+    res.json({ discussion })
+  } catch (error) { next(error) }
 })
 
 export default router

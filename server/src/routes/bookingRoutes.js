@@ -9,7 +9,7 @@ const router = Router()
 // User: create a booking
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    const { eventId, seats, tierName } = req.body
+    const { eventId, seats, tierName, selectedSeats } = req.body
     const numSeats = Number(seats)
     if (!eventId || !numSeats || numSeats < 1 || numSeats > 10)
       return res.status(400).json({ message: 'Please provide a valid event and seat count (1–10).' })
@@ -40,6 +40,7 @@ router.post('/', requireAuth, async (req, res, next) => {
       user: req.user._id, event: eventId,
       seats: numSeats, totalPrice,
       tierName: selectedTierName,
+      selectedSeats: Array.isArray(selectedSeats) ? selectedSeats : [],
     })
     await booking.populate('event', 'title date time venue city price bannerUrl')
 

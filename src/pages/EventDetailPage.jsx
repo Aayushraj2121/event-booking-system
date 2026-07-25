@@ -28,16 +28,27 @@ export default function EventDetailPage() {
       .catch(() => {})
   }
 
+  const [discussions, setDiscussions] = useState([])
+  const [question, setQuestion] = useState('')
+  const [submittingQ, setSubmittingQ] = useState(false)
+  const [answerInputs, setAnswerInputs] = useState({})
+
+  const loadDiscussions = () => {
+    eventApi.getDiscussions(id).then(({ discussions }) => setDiscussions(discussions || [])).catch(() => {})
+  }
+
   useEffect(() => {
     Promise.all([
       eventApi.get(id),
-      eventApi.getReviews(id)
+      eventApi.getReviews(id),
+      eventApi.getDiscussions(id)
     ])
-      .then(([{ event }, { reviews, avgRating, totalReviews }]) => {
+      .then(([{ event }, { reviews, avgRating, totalReviews }, { discussions }]) => {
         setEvent(event)
         setReviews(reviews)
         setAvgRating(avgRating)
         setTotalReviews(totalReviews)
+        setDiscussions(discussions || [])
       })
       .catch(() => setError('Event not found.'))
       .finally(() => setLoading(false))
@@ -178,6 +189,92 @@ export default function EventDetailPage() {
                 </div>
               ))}
               {reviews.length === 0 && <p style={{ color: 'var(--muted)', fontSize: 14 }}>No reviews yet. Be the first to leave a review!</p>}
+            </div>
+          </div>
+
+          {/* Q&A Discussion Forum */}
+          <div className="dash-card" style={{ marginTop: 24 }}>
+            <h2>💬 Event Q&amp;A Discussion Board</h2>
+            <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
+              Have questions about parking, schedule, or rules? Ask below!
+            </p>
+
+            {user ? (
+              <form onSubmit={async (e) => {
+                e.preventDefault()
+                if (!question.trim()) return
+                setSubmittingQ(true)
+                try {
+                  await eventApi.postQuestion(id, question.trim())
+                  showNotification('Question posted!', 'success')
+                  setQuestion('')
+                  loadDiscussions()
+                } catch (err) { showNotification(err.message, 'error') }
+                finally { setSubmittingQ(false) }
+              }} style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                <input
+                  type="text"
+                  placeholder="Ask a question about this event..."
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }}
+                  required
+                />
+                <button className="primary-button" type="submit" disabled={submittingQ}>
+                  {submittingQ ? 'Posting…' : 'Ask Question'}
+                </button>
+              </form>
+            ) : (
+              <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20 }}>
+                <Link to="/login" style={{ color: '#745ec5', textDecoration: 'underline' }}>Log in</Link> to ask a question.
+              </p>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {discussions.map(d => (
+                <div key={d._id} style={{ padding: 14, borderRadius: 10, background: 'var(--paper)', border: '1px solid var(--line)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>
+                    <strong>❓ {d.user?.name}</strong>
+                    <span>{new Date(d.createdAt).toLocaleDateString('en-IN')}</span>
+                  </div>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', margin: '0 0 8px' }}>{d.question}</p>
+
+                  {d.isAnswered ? (
+                    <div style={{ padding: 10, borderRadius: 8, background: 'rgba(116,94,197,0.08)', borderLeft: '3px solid #745ec5', marginTop: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 'bold', color: '#745ec5', display: 'block', marginBottom: 2 }}>OFFICIAL ORGANIZER RESPONSE ✅</span>
+                      <p style={{ fontSize: 13, color: 'var(--ink)', margin: 0 }}>{d.answer}</p>
+                    </div>
+                  ) : ['organizer', 'admin'].includes(user?.role) ? (
+                    <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Reply as organizer..."
+                        value={answerInputs[d._id] || ''}
+                        onChange={(e) => setAnswerInputs({ ...answerInputs, [d._id]: e.target.value })}
+                        style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--line)', fontSize: 12 }}
+                      />
+                      <button
+                        className="primary-button"
+                        style={{ padding: '6px 12px', fontSize: 12 }}
+                        onClick={async () => {
+                          const ans = answerInputs[d._id]
+                          if (!ans?.trim()) return
+                          try {
+                            await eventApi.answerQuestion(id, d._id, ans.trim())
+                            showNotification('Response posted!', 'success')
+                            loadDiscussions()
+                          } catch (err) { showNotification(err.message, 'error') }
+                        }}
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 11, color: 'var(--muted)', fontStyle: 'italic' }}>Awaiting organizer response...</span>
+                  )}
+                </div>
+              ))}
+              {discussions.length === 0 && <p style={{ fontSize: 13, color: 'var(--muted)' }}>No questions asked yet.</p>}
             </div>
           </div>
         </div>

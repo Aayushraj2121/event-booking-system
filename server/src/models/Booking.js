@@ -7,6 +7,7 @@ const bookingSchema = new mongoose.Schema({
   seats:       { type: Number, required: true, min: 1, max: 10 },
   totalPrice:  { type: Number, required: true },
   tierName:    { type: String, default: 'General' },
+  selectedSeats: [{ type: String }],
   status:      { type: String, enum: ['confirmed', 'cancelled'], default: 'confirmed' },
   bookingRef:  { type: String, unique: true, default: () => nanoid(8).toUpperCase() },
   checkedIn:   { type: Boolean, default: false },

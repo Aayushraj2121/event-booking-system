@@ -36,12 +36,14 @@ function OrganizerRoute({ children }) {
 }
 
 import NotificationToast from './components/NotificationToast'
+import AiEventAssistant from './components/AiEventAssistant'
 
 export default function App() {
   return (
     <AuthProvider>
       <NotificationToast />
       <BrowserRouter>
+        <AiEventAssistant />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<AuthPage mode="login" />} />
