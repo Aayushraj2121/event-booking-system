@@ -139,3 +139,4 @@ npm run build
 | **Attendee** | `attendee@evently.com` | `TestPassword123` |
 | **Organizer** | `organizer@evently.com` | `TestPassword123` |
 | **Super Admin** | `admin@evently.com` | `Admin@123` |
+# Event_booking
