@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:5001/api'
+const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5001') + '/api'
 const TOKEN_KEY = 'evently_token'
 
 const getToken = () => localStorage.getItem(TOKEN_KEY)
